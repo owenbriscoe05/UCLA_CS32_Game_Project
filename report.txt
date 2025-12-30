@@ -1,0 +1,55 @@
+﻿Goblin Recursion
+Name of function: Goblin::moveHelper
+The function is in Actor.cpp. I have a separate function called Goblin::move that calls the recursive function. 
+
+
+Goblin::move is called every turn for every goblin (after the player makes their move). It is called from Game.cpp. Goblin::move is passed a pointer to the calling goblin, the game’s grid, the player’s coordinates, and two pass-by-reference integers which will eventually either store the goblin’s next coordinates or the point (0, 0), indicating that the goblin could not sniff the player. I don’t move the goblin inside Goblin::move, mainly so that the function is less cluttered with other movement checks that I perform in Game.cpp. 
+Goblin::move uses integers gobRow and gobCol and an array of “directions” to call Goblin::moveHelper in every direction. It also creates a tempGrid of bools that it passes so that Goblin::moveHelper can indicate locations it has traversed. Goblin::moveHelper returns an integer, the optimal distance to the player. If that number is under the smellDistance specified by the program’s main call to game.play and is less than any previously established minimum distance, then integers are set to represent the goblin’s new best coordinates, based on the direction passed to Goblin::moveHelper
+Goblin::moveHelper is passed the same pointer to the goblin that called Goblin::move, the grid, a tempGrid of bools, the goblin’s row and column (in a new direction), and a counter that begins at 1, representing the number of moves the recursive function has taken. The base cases for my recursive function are 
+1. If the goblin’s row and column are now the same as the player’s row and column (i.e. if grid[grow][gcol] is the ‘@’ character. In this case, we return counter.
+2. If counter is larger than the indicated smellDistance sent into main, and in this case we return INT_MAX, which is the largest integer C++ allows before flowing over
+The reason I use INT_MAX as a return value (in this base case and in the final return, after the recursive calls)  is to make it foolproof that when the recursive function returns, minDistance in Goblin::move will be given some value other than INT_MAX. It is not plausible that even if smellDistance was a huge value, the recursive function would search for INT_MAX calls (or at least I sure hope not). 
+        Goblin::moveHelper then sets the tempGrid at the goblin’s coordinates to true, indicating that the goblin has seen that location. Then we have our recursive calls to Goblin::moveHelper which each check a different direction. First, they “look” to see if the grid is traversable in this location, and if the coordinates have already been traversed, using the tempGrid. If both of these return favorably, the recursive function is called.
+        At the end, we set tempGrid at the goblin’s coordinates back to false. This is a necessary step, because without it, certain situations would cover the tempGrid in true, so that even when the recursive function returns all the way back to, say, the first call to goblin::moveHelper, it cannot check another direction because the entire tempGrid is covered in true. This would cause the function to return INT_MAX, suggesting that it didn’t find the player, when in reality we just didn’t check all the possible paths.
+        Finally, we return INT_MAX again to ensure that we cover the case where the goblin truly does just get stuck somewhere before reaching the player or the max number of moves allowed.
+
+
+
+
+Room/hallway generation:
+
+
+When the game is initially ran, I have one call to generateNewLevel. From there on out, a new level is generated every time the stairs are traversed (i.e. new levels are generated during execution, not at compile time). 
+
+
+generateNewLevel, every time it is called, first resets every actor to nullptr, since we have no use for the old actors on the old level. It also resets the coordinates of any dropped item, since dropped items are also specific to the level. It resets the grid, and then generates rooms with a call to generateRooms. This function is passed the grid and a randomly generated number of rooms (for my project, I went with between 3 and 5 rooms). For each room, a randomly generated width, height, upper left x coord, and upper left y coord are generated. A new room is created, using a struct called Room whose only real purpose is to hold these values, and then passed to a fun function called isOverlap.
+
+
+The function isOverlap takes the room it was passed, as well as the array of all rooms created, and the number of rooms created. It checks for each current room, if any existing room has overlap, given it’s x and y coordinates, and width and height. It also ensures the room will be within bounds. If any of this is true, the function returns true, and the room will not be placed. 
+
+
+Back in generateRooms, if the room can be placed, it is added to the array and the function calls addRoom, which is a simple function that edits the grid to create ‘ ‘ characters given the room’s width, height, and coordinates. 
+
+
+All of this is contained within a for loop that ensures the correct number of rooms are generated (so that if any overlaps are found, the loop continues operating until all rooms are placed). 
+
+
+After all rooms are placed, the generateHallways function is called. This function takes the grid, number of rooms, and array of rooms. For each room, it finds the center of the room as well as the center of the room previous to it (in the array). Then the hallways are semi-randomly placed using two functions: generateHorizontalHallway and generateVerticalHallway. Both function simply use the grid to create ‘ ‘ spaces in straight lines. The horizontal hallways always originate at the X center coordinate. However, the function ensures that the hallway moves in the correct direction, from the lower Y coordinate to the higher Y coordinate. The vertical hallways employ the same approach, but always originating at the Y center coordinate. Both functions are called for every set of 2 rooms, so that “elbows” are created in the hallways between rooms that require it.
+
+
+The generateHallways function also uses a the randInt function between 1 and 2 to determine if the horizontal or vertical hallway will be passed the “current” room’s X/Y, or the “previous” room’s X/Y as a starting point. This creates a little variation (elbow beginning with going upwards or to the side, e.g..)
+
+
+
+
+After hallway generation, level generation finishes by spawning the player, the monsters, the game objects, stairs (if applicable), and the golden idol (if applicable), before clearing the screen and displaying the grid.
+
+
+
+
+Inefficiencies/Bugs:
+
+
+* Very occasionally, a room will spawn with a width less than allowed, and without hallways going to it. It doesn’t affect the rest of the game in any way, although I haven’t been able to locate the reason for this bug.
+* Very very occasionally (i.e. perhaps 1 in 200), a bad access error occurs regarding the actors array
+* It appears on g32 that there is one memory leak upon every completion of the game
