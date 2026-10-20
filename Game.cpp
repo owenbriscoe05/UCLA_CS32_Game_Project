@@ -864,6 +864,9 @@ void addRoom(char grid[MAX_ROWS][MAX_COLS], const Room& room) {
 
 // Function to check if a room overlaps with existing rooms
 bool isOverlap(const Room& room, const Room* rooms, int numRooms) {
+    //also checking the borders
+    if (room.x + room.width > MAX_ROWS - 1 || room.y + room.height > MAX_COLS - 1)
+        return true;
     for (int i = 0; i < numRooms; i++) { //cycle through all existing rooms
         const Room& existingRoom = rooms[i];
         //this if statement checks for overlap between two rooms, based on their x and y coordinates + their width/height
@@ -873,9 +876,6 @@ bool isOverlap(const Room& room, const Room* rooms, int numRooms) {
             room.y + room.height >= existingRoom.y) {
             return true;  // overlap found
         }
-        //also checking the borders
-        if (room.x + room.height >= 16 || room.y + room.width >= 69)
-            return true;
     }
     return false;  //no overlap
 }

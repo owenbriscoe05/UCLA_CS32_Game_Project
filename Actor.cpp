@@ -226,8 +226,8 @@ void Player::deleteItemFromInventory(int i) {
     inventory[i] = nullptr;
     for (int j = i; j < m_numItems; j++) {
         if (j+1 == m_numItems)
-            inventory[i] = nullptr;
-        else inventory[i] = inventory[i+1];
+            inventory[j] = nullptr;
+        else inventory[j] = inventory[j+1];
             
     }
     m_numItems--;
@@ -334,10 +334,10 @@ char surroundingsCheck(Actor* a, char (&grid)[18][70], int row, int col) {
 //both the player and all monsters use this function, since player and monster are both derived from the actor base class
 string Actor::attack(Actor* a, Actor* b) { //Actor a is the attacker, b is the defender
     bool sleep = false;
-    int attackPoints = a->getDex() + a->currentWeapon->dexBonus();
+    int attackPoints = a->getDex() + a->currWeap()->dexBonus();
     int defendPoints = b->getDex() + b->getArmor();
     if (randInt(1, attackPoints) >= randInt(1, defendPoints)) { //if the defender gets hit
-        if (a->currentWeapon->getDescription() == "Magic fangs") { //if the weapon is fangs
+        if (a->currWeap()->getDescription() == "Magic fangs") { //if the weapon is fangs
             if (randInt(1, 5) == 1) { //if the fangs put the defender to sleep
                 if (b->sleepTime == 0) { //if sleep time is 0
                     b->sleepTime = randInt(2, 6); //use the normal randInt generation
@@ -353,7 +353,7 @@ string Actor::attack(Actor* a, Actor* b) { //Actor a is the attacker, b is the d
                 
             }
         }
-        int damagePoints = randInt(0, a->getStrength() + a->currentWeapon->damagePoints());
+        int damagePoints = randInt(0, a->getStrength() + a->currWeap()->damagePoints());
         int result = b->getHit(damagePoints);
         b->setHP(result);
         if (result <= 0 && b->getDescription() != "player") //meaning a monster got killed

@@ -85,6 +85,7 @@ public:
     void displayInventory();
     void setWeapon(Weapon* w);
     string getWeaponName();
+    Weapon* currWeap() { return currentWeapon; }
     Weapon* accessWeapons(int i);
     Scroll* accessScrolls(int i);
     void deleteItemFromInventory(int i);
